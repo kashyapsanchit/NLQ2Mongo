@@ -1,0 +1,8 @@
+.venv/
+venv/
+.idea/
+.env
+.grit
+env
+app.log
+__pycache__

@@ -1,0 +1,68 @@
+parameters:
+- name: envSelection
+  displayName: 'Select Namespace'
+  type: string
+  default: carbo
+  values:
+  - carbo
+
+- name: serviceSelection
+  displayName: 'Select Service'
+  type: string
+  values:
+  - python-nlp
+
+trigger:
+- none
+
+resources:
+- repo: self
+
+variables:
+  imageRepository: '${{parameters.serviceSelection}}'
+  containerRegistry: 'fracprodev.azurecr.io'
+  imageReference: 'fracprodev.azurecr.io/${{parameters.serviceSelection}}:v.$(Build.BuildId)'
+  dockerfilePath: "Dockerfile"
+  tag: '$(Build.BuildId)'
+  passwd: 'ofoWV1Bz5NwyU24TdusRTNZJO1=2xzNc'
+  vmImageName: 'ubuntu-latest'
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:
+    - script: |
+        docker build -t $(imageRepository):$(tag) -f $(dockerfilePath) .
+        docker tag $(imageRepository):$(tag) $(imageReference)
+        docker login $(containerRegistry) -u fracprodev -p $(passwd)
+        docker push $(imageReference)
+      displayName: 'Build and push Docker image'
+      continueOnError: false
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    environment: 'fracproops-dev.carbo'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: Kubernetes@1
+            displayName: 'Update image of Python service'
+            inputs:
+              connectionType: 'Kubernetes Service Connection'
+              kubernetesServiceEndpoint: 'aks-dev-cluster-${{parameters.envSelection}}-ns'
+              namespace: '${{parameters.envSelection}}'
+              command: 'set'
+              arguments: 'image deploy/$(imageRepository) $(imageRepository)=$(imageReference)'

@@ -1,0 +1,12 @@
+services:
+  llm_search:
+    pull_policy: build
+    image: llm_search/llm_search
+    build: ./
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      TAVILY_API_KEY: ${TAVILY_API_KEY}
+      LANGCHAIN_API_KEY: ${LANGCHAIN_API_KEY}
+    restart: always
+    ports:
+      - 8000:8000

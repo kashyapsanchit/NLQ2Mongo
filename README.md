@@ -1,6 +1,6 @@
 # NLQ2Mongo
 
-- This project leverages OpenAI's gpt-4o to generate mongodb queries based on natural language inputs provided 
+- This project leverages Meta's llama-3.1-8b to generate mongodb queries based on natural language inputs provided 
 by user. It does this using langgraph and an Agentic workflow by detecting contexts and also stores the generated queries in the database for future usage.
 ---
 
